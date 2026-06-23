@@ -334,7 +334,7 @@
 
     <div class="field" id="f-phone">
       <label>手機號碼 <span class="req">*</span></label>
-      <input type="tel" id="phone" placeholder="09xxxxxxxx" autocomplete="off" inputmode="tel" maxlength="10">
+      <input type="text" id="phone" placeholder="09xxxxxxxx" autocomplete="off" inputmode="numeric" maxlength="10">
       <div class="err">請填寫有效的手機號碼（09 開頭，10 碼）</div>
     </div>
 
@@ -419,7 +419,7 @@
 <script>
   // ── 設定區 ──────────────────────────────────
   const LIFF_ID       = '2010463518-MEc1Cnt4';
-  const WEBHOOK_URL   = 'https://yan-n8n.zeabur.app/webhook/member-register';
+  const WEBHOOK_URL   = 'https://你的網址.zeabur.app/webhook/member-register';
   const STAFF_OPTIONS = [
     { value: 'A001', label: 'Amy' },
     { value: 'A002', label: 'Bella' },
@@ -521,7 +521,7 @@
 
     const fields = [
       { id: 'f-name',     val: () => document.getElementById('name').value.trim(), check: v => v.length > 0 },
-      { id: 'f-phone',    val: () => document.getElementById('phone').value.trim(), check: v => /^09\d{8}$/.test(v) },
+      { id: 'f-phone',    val: () => document.getElementById('phone').value.trim(), check: v => /^09\d{8}$/.test(v.replace(/-/g, '')) },
       { id: 'f-birthday', val: () => document.getElementById('birthday').value, check: v => v.length > 0 },
     ];
 
