@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>加入會員</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose:    #C9847A;
+      --rose-lt: #F5EAE8;
+      --rose-dk: #9E5F56;
+      --ink:     #2A2320;
+      --ink-2:   #6B5E5B;
+      --ink-3:   #A89997;
+      --surface: #FDFAF9;
+      --line:    #EDE5E3;
+      --white:   #FFFFFF;
+      --green:   #2D7A50;
+      --green-lt:#EBF6F0;
+      --red:     #C0392B;
+      --red-lt:  #FDECEA;
+      --radius:  12px;
+    }
+
+    body {
+      font-family: -apple-system, 'Noto Sans TC', 'PingFang TC', sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
+      padding-bottom: 48px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--rose);
+      padding: 32px 20px 28px;
+      text-align: center;
+    }
+    .header-eyebrow {
+      font-size: 11px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 8px;
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 0.5px;
+    }
+    .header p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* ── LINE 身分徽章 ── */
+    .line-badge {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 16px 0;
+      padding: 10px 14px;
+      background: var(--green-lt);
+      border: 1px solid #B8DFC9;
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--green);
+    }
+    .line-badge .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      margin: 16px 16px 0;
+      border-radius: var(--radius);
+      padding: 22px 18px;
+      border: 1px solid var(--line);
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--rose);
+      margin-bottom: 16px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 20px -18px;
+    }
+
+    /* ── Form fields ── */
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-2);
+      margin-bottom: 6px;
+    }
+    label .req { color: var(--rose); margin-left: 2px; }
+    label .opt {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--ink-3);
+      margin-left: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      height: 46px;
+      padding: 0 14px;
+      border: 1.5px solid var(--line);
+      border-radius: 9px;
+      font-size: 15px;
+      color: var(--ink);
+      background: var(--surface);
+      -webkit-appearance: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--rose);
+      background: var(--white);
+    }
+    input::placeholder { color: var(--ink-3); }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 4.5L11 1' stroke='%23A89997' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 38px;
+      color: var(--ink);
+    }
+    select option[value=""] { color: var(--ink-3); }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* ── 錯誤訊息 ── */
+    .err {
+      display: none;
+      font-size: 11.5px;
+      color: var(--red);
+      margin-top: 4px;
+      padding-left: 2px;
+    }
+    .field.invalid input,
+    .field.invalid select { border-color: var(--red); }
+    .field.invalid .err { display: block; }
+
+    /* ── 同意個資 ── */
+    .consent-box {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px;
+      background: var(--rose-lt);
+      border-radius: 9px;
+      cursor: pointer;
+    }
+    .consent-box input[type="checkbox"] {
+      width: 20px; height: 20px;
+      min-width: 20px;
+      border-radius: 5px;
+      margin-top: 1px;
+      accent-color: var(--rose);
+      cursor: pointer;
+    }
+    .consent-text {
+      font-size: 12.5px;
+      color: var(--ink-2);
+      line-height: 1.6;
+    }
+    .consent-text strong { color: var(--ink); }
+
+    /* ── 送出按鈕 ── */
+    .submit-wrap { margin: 20px 16px 0; }
+    .submit-btn {
+      width: 100%;
+      height: 52px;
+      background: var(--rose);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .submit-btn:active { background: var(--rose-dk); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Loading overlay ── */
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(253,250,249,0.9);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      z-index: 99;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--line);
+      border-top-color: var(--rose);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 成功畫面 ── */
+    #success {
+      display: none;
+      text-align: center;
+      padding: 60px 24px;
+    }
+    .success-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+    .success-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .success-sub {
+      font-size: 14px;
+      color: var(--ink-2);
+      line-height: 1.7;
+    }
+    .member-chip {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 8px 18px;
+      background: var(--rose-lt);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--rose-dk);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── 已是會員畫面 ── */
+    #already-member {
+      display: none;
+      text-align: center;
+      padding: 60px 24px;
+    }
+    .already-icon { font-size: 48px; margin-bottom: 16px; }
+    .already-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .already-sub { font-size: 13px; color: var(--ink-2); line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="overlay">
+  <div class="spinner"></div>
+  <span style="font-size:13px;color:var(--ink-2)">建立會員中…</span>
+</div>
+
+<!-- 主表單 -->
+<div id="main">
+  <div class="header">
+    <div class="header-eyebrow">線上會員</div>
+    <h1>加入會員</h1>
+    <p>填寫一次，享受個人化保養服務</p>
+  </div>
+
+  <div class="line-badge" id="line-badge">
+    <div class="dot"></div>
+    <span>已取得您的 LINE 帳號，資料將自動綁定</span>
+  </div>
+
+  <div class="card">
+    <div class="section-label">基本資料</div>
+
+    <div class="field" id="f-name">
+      <label>姓名 <span class="req">*</span></label>
+      <input type="text" id="name" placeholder="請輸入真實姓名" autocomplete="off" inputmode="text">
+      <div class="err">請填寫姓名</div>
+    </div>
+
+    <div class="field" id="f-phone">
+      <label>手機號碼 <span class="req">*</span></label>
+      <input type="tel" id="phone" placeholder="09xxxxxxxx" autocomplete="off" inputmode="tel" maxlength="10">
+      <div class="err">請填寫有效的手機號碼（09 開頭，10 碼）</div>
+    </div>
+
+    <div class="field-row">
+      <div class="field" id="f-birthday">
+        <label>生日 <span class="req">*</span></label>
+        <input type="date" id="birthday">
+        <div class="err">請選擇生日</div>
+      </div>
+      <div class="field" id="f-gender">
+        <label>性別 <span class="opt">選填</span></label>
+        <select id="gender">
+          <option value="">不填寫</option>
+          <option value="女">女</option>
+          <option value="男">男</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 服務偏好（暫時隱藏，未來啟用請移除 display:none） -->
+    <div style="display:none">
+      <div class="divider"></div>
+      <div class="section-label">服務偏好</div>
+
+      <div class="field" id="f-store">
+        <label>常用門市 <span class="req">*</span></label>
+        <select id="store">
+          <option value="">請選擇</option>
+          <option value="S001">總店</option>
+        </select>
+        <div class="err">請選擇門市</div>
+      </div>
+
+      <div class="field" id="f-staff">
+        <label>常用服務人員 <span class="opt">選填</span></label>
+        <select id="staff">
+          <option value="">不指定</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <label class="consent-box" id="consent-box">
+      <input type="checkbox" id="consent">
+      <div class="consent-text">
+        我同意提供以上個人資料供店家使用，並授權透過 <strong>LINE</strong> 接收預約提醒、保養建議及相關通知。
+      </div>
+    </label>
+    <div class="err" id="err-consent" style="margin-top:6px">請勾選同意後才能加入會員</div>
+  </div>
+
+  <div class="submit-wrap">
+    <button class="submit-btn" id="submit-btn" onclick="submitForm()">
+      <span>完成，加入會員</span>
+    </button>
+  </div>
+</div>
+
+<!-- 成功畫面 -->
+<div id="success">
+  <div class="success-icon">🌸</div>
+  <div class="success-title">歡迎加入！</div>
+  <div class="success-sub">
+    會員資料已建立完成<br>
+    預約提醒與保養通知將透過 LINE 發送給您
+  </div>
+  <div class="member-chip" id="member-id-chip"></div>
+</div>
+
+<!-- 已是會員畫面 -->
+<div id="already-member">
+  <div class="already-icon">✅</div>
+  <div class="already-title">您已經是會員了</div>
+  <div class="already-sub">
+    無需重複填寫<br>
+    如需修改資料，請聯絡店家
+  </div>
+</div>
+
+<script>
+  // ── 設定區 ──────────────────────────────────
+  const LIFF_ID       = 'YOUR_LIFF_ID_HERE';
+  const WEBHOOK_URL   = 'https://你的網址.zeabur.app/webhook/member-register';
+  const STAFF_OPTIONS = [
+    { value: 'A001', label: 'Amy' },
+    { value: 'A002', label: 'Bella' },
+  ];
+  // ────────────────────────────────────────────
+
+  let lineUserId = '';
+  let lineDisplayName = '';
+
+  // 填入服務人員選項
+  const staffSel = document.getElementById('staff');
+  STAFF_OPTIONS.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.value;
+    opt.textContent = s.label;
+    staffSel.appendChild(opt);
+  });
+
+  // 初始化 LIFF
+  async function initLiff() {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+
+      if (!liff.isLoggedIn()) {
+        liff.login({ redirectUri: location.href });
+        return;
+      }
+
+      const profile = await liff.getProfile();
+      lineUserId      = profile.userId;
+      lineDisplayName = profile.displayName;
+
+      document.getElementById('line-badge').style.display = 'flex';
+
+      // 預填姓名（使用者可以修改）
+      const nameInput = document.getElementById('name');
+      if (!nameInput.value) nameInput.value = lineDisplayName;
+
+      // 檢查是否已是會員（呼叫 Webhook 查詢）
+      await checkExistingMember(lineUserId);
+
+    } catch (err) {
+      console.warn('LIFF init failed（開發模式）:', err);
+    }
+  }
+
+  async function checkExistingMember(userId) {
+    try {
+      const res = await fetch(WEBHOOK_URL.replace('member-register', 'check-member'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineUserId: userId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.exists) {
+          document.getElementById('main').style.display = 'none';
+          document.getElementById('already-member').style.display = 'block';
+        }
+      }
+    } catch (_) {
+      // 查詢失敗就繼續顯示表單
+    }
+  }
+
+  // 驗證
+  function validate() {
+    let ok = true;
+
+    const fields = [
+      { id: 'f-name',     val: () => document.getElementById('name').value.trim(), check: v => v.length > 0 },
+      { id: 'f-phone',    val: () => document.getElementById('phone').value.trim(), check: v => /^09\d{8}$/.test(v) },
+      { id: 'f-birthday', val: () => document.getElementById('birthday').value, check: v => v.length > 0 },
+    ];
+
+    fields.forEach(f => {
+      const el = document.getElementById(f.id);
+      if (f.check(f.val())) {
+        el.classList.remove('invalid');
+      } else {
+        el.classList.add('invalid');
+        ok = false;
+      }
+    });
+
+    // 同意個資
+    const consent = document.getElementById('consent');
+    const errConsent = document.getElementById('err-consent');
+    if (!consent.checked) {
+      errConsent.style.display = 'block';
+      ok = false;
+    } else {
+      errConsent.style.display = 'none';
+    }
+
+    return ok;
+  }
+
+  // 送出
+  async function submitForm() {
+    if (!validate()) return;
+
+    document.getElementById('overlay').style.display = 'flex';
+    document.getElementById('submit-btn').disabled = true;
+
+    const payload = {
+      lineUserId:      lineUserId || 'DEV_TEST',
+      lineDisplayName: lineDisplayName || document.getElementById('name').value.trim(),
+      name:            document.getElementById('name').value.trim(),
+      phone:           document.getElementById('phone').value.trim(),
+      birthday:        document.getElementById('birthday').value,
+      gender:          document.getElementById('gender').value,
+      preferredStore:  document.getElementById('store').value,
+      preferredStaff:  document.getElementById('staff').value,
+      consent:         true,
+    };
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || '伺服器錯誤');
+
+      // 成功
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('main').style.display = 'none';
+      document.getElementById('success').style.display = 'block';
+      document.getElementById('member-id-chip').textContent = '會員編號 ' + (data.memberId || '');
+
+      setTimeout(() => {
+        if (liff.isInClient && liff.isInClient()) liff.closeWindow();
+      }, 4000);
+
+    } catch (err) {
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('submit-btn').disabled = false;
+      alert('送出失敗，請稍後再試\n' + err.message);
+    }
+  }
+
+  // 輸入時即時清除錯誤
+  ['name','phone','birthday'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      const field = el.closest('.field');
+      if (field) field.classList.remove('invalid');
+    });
+  });
+
+  initLiff();
+</script>
+</body>
+</html>
